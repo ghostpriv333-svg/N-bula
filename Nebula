@@ -91,8 +91,8 @@ LoadGui.Parent = playerGui
 
 local loaderW, loaderH = 400, 195
 local MainLoader = Instance.new("Frame")
-MainLoader.Size = UDim2.new(0, loaderW * 0.86, 0, loaderH * 0.86)
-MainLoader.Position = UDim2.new(0.5, -(loaderW * 0.86) / 2, 0.5, -(loaderH * 0.86) / 2)
+MainLoader.Size = UDim2.new(0, loaderW * 0.88, 0, loaderH * 0.88)
+MainLoader.Position = UDim2.new(0.5, -(loaderW * 0.88) / 2, 0.5, -(loaderH * 0.88) / 2)
 MainLoader.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
 MainLoader.BackgroundTransparency = 0.04
 MainLoader.BorderSizePixel = 0
@@ -109,19 +109,19 @@ LStroke.Parent = MainLoader
 
 local LTitle = Instance.new("TextLabel")
 LTitle.Size = UDim2.new(1, -24, 0, 28)
-LTitle.Position = UDim2.new(0, 12, 0, 16)
+LTitle.Position = UDim2.new(0, 12, 0, 18)
 LTitle.BackgroundTransparency = 1
-LTitle.Text = "N   NEBULA HUB"
+LTitle.Text = "NEBULA HUB"
 LTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-LTitle.TextSize = 19
+LTitle.TextSize = 20
 LTitle.Font = Enum.Font.SourceSansBold
 LTitle.Parent = MainLoader
 
 local LSub = Instance.new("TextLabel")
 LSub.Size = UDim2.new(1, -24, 0, 20)
-LSub.Position = UDim2.new(0, 12, 0, 52)
+LSub.Position = UDim2.new(0, 12, 0, 54)
 LSub.BackgroundTransparency = 1
-LSub.Text = "A inicializar..."
+LSub.Text = "A iniciar..."
 LSub.TextColor3 = Color3.fromRGB(175, 175, 182)
 LSub.TextSize = 13
 LSub.Font = Enum.Font.SourceSans
@@ -129,7 +129,7 @@ LSub.Parent = MainLoader
 
 local LPct = Instance.new("TextLabel")
 LPct.Size = UDim2.new(1, -24, 0, 20)
-LPct.Position = UDim2.new(0, 12, 0, 82)
+LPct.Position = UDim2.new(0, 12, 0, 84)
 LPct.BackgroundTransparency = 1
 LPct.Text = "0%"
 LPct.TextColor3 = Color3.fromRGB(235, 65, 65)
@@ -158,22 +158,36 @@ local LBarFillC = Instance.new("UICorner")
 LBarFillC.CornerRadius = UDim.new(1, 0)
 LBarFillC.Parent = LBarFill
 
-animar(MainLoader, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {
+animar(MainLoader, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {
 	Size = UDim2.new(0, loaderW, 0, loaderH),
 	Position = UDim2.new(0.5, -loaderW / 2, 0.5, -loaderH / 2)
 })
 
-local function setProgresso(pct, texto)
-	if LBarFill and LBarFill.Parent then
-		animar(LBarFill, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {
-			Size = UDim2.new(math.clamp(pct, 0, 100) / 100, 0, 1, 0)
-		})
-	end
-	if LPct and LPct.Parent then
-		LPct.Text = tostring(math.floor(pct)) .. "%"
-	end
+local progressoAtual = 0
+
+local function setProgresso(pctAlvo, texto)
 	if texto and LSub and LSub.Parent then
 		LSub.Text = texto
+	end
+
+	pctAlvo = math.clamp(pctAlvo, progressoAtual, 100)
+	local passos = math.max(1, pctAlvo - progressoAtual)
+
+	for i = 1, passos do
+		progressoAtual += 1
+		if LBarFill and LBarFill.Parent then
+			LBarFill.Size = UDim2.new(progressoAtual / 100, 0, 1, 0)
+		end
+		if LPct and LPct.Parent then
+			LPct.Text = tostring(progressoAtual) .. "%"
+		end
+		if passos > 10 then
+			if i % 3 == 0 then
+				task.wait(0.01)
+			end
+		else
+			task.wait(0.012)
+		end
 	end
 end
 local function abrirHubPrincipal(imagemJogoFTF)
@@ -231,7 +245,7 @@ local function abrirHubPrincipal(imagemJogoFTF)
 	WinStroke.Thickness = 1
 	WinStroke.Parent = Win
 
-	animar(Win, 0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, {
+	animar(Win, 0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, {
 		Position = UDim2.new(0.5, -hubW / 2, 0.5, -hubH / 2)
 	})
 
@@ -249,7 +263,7 @@ local function abrirHubPrincipal(imagemJogoFTF)
 	BrandLbl.Size = UDim2.new(0, 110, 1, 0)
 	BrandLbl.Position = UDim2.new(0, 16, 0, 0)
 	BrandLbl.BackgroundTransparency = 1
-	BrandLbl.Text = "N   NEBULA"
+	BrandLbl.Text = "NEBULA"
 	BrandLbl.TextColor3 = Color3.fromRGB(220, 40, 40)
 	BrandLbl.TextSize = 15
 	BrandLbl.Font = Enum.Font.SourceSansBold
@@ -548,18 +562,18 @@ local function abrirHubPrincipal(imagemJogoFTF)
 end
 
 task.spawn(function()
-	setProgresso(20, "A verificar ambiente...")
-	task.wait(0.18)
+	setProgresso(25, "A verificar ambiente...")
+	task.wait(0.12)
 
-	setProgresso(55, "A obter imagem do jogo...")
+	setProgresso(60, "A obter imagem do jogo...")
 	local imgFTF = obterImagemJogo(game.GameId, game.PlaceId)
-	task.wait(0.2)
+	task.wait(0.12)
 
-	setProgresso(85, "A preparar interface...")
-	task.wait(0.18)
+	setProgresso(90, "A preparar interface...")
+	task.wait(0.12)
 
 	setProgresso(100, "Concluido!")
-	task.wait(0.18)
+	task.wait(0.15)
 
 	animar(MainLoader, 0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In, {
 		Position = UDim2.new(0.5, -loaderW / 2, 0.5, -loaderH / 2 + 16)
