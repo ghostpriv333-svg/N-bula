@@ -1,8 +1,10 @@
--- Nébula Flee GUI Fixa (Sem Fly / Noclip / AutoPC | ESP Discreto)
+-- Nébula Flee GUI Fixa (Sem Fly / Noclip | AutoPC Focado em Acertar Minigame + ESP Discreto)
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Workspace = game:GetService("Workspace")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -13,6 +15,7 @@ if playerGui:FindFirstChild("NebulaFlee_GUI") then
 end
 
 local States = {
+	AutoPC = false,
 	PlayerESP = false,
 	PCESP = false,
 	ExitDoorESP = false,
@@ -162,6 +165,63 @@ local function RefreshPlayerESP()
 	end
 end
 
+-- ==========================================
+-- AUTOPC (FOCO APENAS NO ACERTO DO MINIGAME)
+-- ==========================================
+local lastActionClock = 0
+
+local function FindActiveTimingCircle()
+	for _, desc in ipairs(playerGui:GetDescendants()) do
+		if desc:IsA("GuiObject") and desc.Visible then
+			local lowerName = string.lower(desc.Name)
+			if desc.Name == "TimingCircle" or string.find(lowerName, "timingcircle", 1, true) then
+				return desc
+			end
+		end
+	end
+	return nil
+end
+
+local function TryRemoteMinigameResult()
+	pcall(function()
+		local remote = ReplicatedStorage:FindFirstChild("RemoteEvent", true)
+		if remote and remote:IsA("RemoteEvent") then
+			remote:FireServer("SetPlayerMinigameResult", true)
+		end
+	end)
+end
+
+local function TryHitTimingCircle(circle)
+	if not circle then
+		return
+	end
+	if os.clock() - lastActionClock < 0.30 then
+		return
+	end
+	lastActionClock = os.clock()
+
+	TryRemoteMinigameResult()
+
+	pcall(function()
+		if VirtualInputManager then
+			VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Space, false, game)
+			task.wait(0.03)
+			VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Space, false, game)
+		end
+	end)
+end
+
+local function StepAutoPC()
+	if not States.AutoPC then
+		return
+	end
+
+	local circle = FindActiveTimingCircle()
+	if circle then
+		TryHitTimingCircle(circle)
+	end
+end
+
 task.spawn(function()
 	while playerGui and playerGui.Parent do
 		if States.PCESP then
@@ -176,6 +236,24 @@ task.spawn(function()
 		task.wait(1.25)
 	end
 end)
+
+task.spawn(function()
+	while playerGui and playerGui.Parent do
+		if States.AutoPC then
+			pcall(StepAutoPC)
+			task.wait(0.08)
+		else
+			task.wait(0.25)
+		end
+	end
+end)
+
+local function OnToggleAutoPC(enabled: boolean)
+	print("[AutoPC]:", enabled and "ATIVADO (foco no minigame)" or "DESATIVADO")
+	if enabled then
+		pcall(StepAutoPC)
+	end
+end
 
 local function OnTogglePlayerESP(enabled: boolean)
 	print("[Player ESP]:", enabled and "ATIVADO" or "DESATIVADO")
@@ -232,8 +310,8 @@ ToggleMenuBtn.Parent = TopBar
 local MainFrame = Instance.new("Frame")
 MainFrame.Name = "MainFrame"
 MainFrame.AnchorPoint = Vector2.new(0.5, 0.5)
-MainFrame.Size = UDim2.new(0, 195, 0, 192)
-MainFrame.Position = UDim2.new(0.22, 0, 0.52, 0)
+MainFrame.Size = UDim2.new(0, 195, 0, 232)
+MainFrame.Position = UDim2.new(0.22, 0, 0.54, 0)
 MainFrame.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
 MainFrame.BackgroundTransparency = 0.05
 MainFrame.BorderSizePixel = 0
@@ -292,7 +370,7 @@ Divider.Parent = MainFrame
 
 local ButtonsHolder = Instance.new("Frame")
 ButtonsHolder.Name = "ButtonsHolder"
-ButtonsHolder.Size = UDim2.new(1, -14, 0, 122)
+ButtonsHolder.Size = UDim2.new(1, -14, 0, 162)
 ButtonsHolder.Position = UDim2.new(0, 7, 0, 38)
 ButtonsHolder.BackgroundTransparency = 1
 ButtonsHolder.BorderSizePixel = 0
@@ -310,7 +388,7 @@ FooterLabel.Name = "FooterLabel"
 FooterLabel.Size = UDim2.new(1, -14, 0, 14)
 FooterLabel.Position = UDim2.new(0, 7, 1, -18)
 FooterLabel.BackgroundTransparency = 1
-FooterLabel.Text = "Nébula Flee • ESP"
+FooterLabel.Text = "Nébula Flee • AutoPC & ESP"
 FooterLabel.TextColor3 = Color3.fromRGB(150, 150, 165)
 FooterLabel.Font = Enum.Font.Gotham
 FooterLabel.TextSize = 9
@@ -375,25 +453,32 @@ local function CreateOptionButton(config, order)
 end
 
 CreateOptionButton({
+	Label = "AutoPC",
+	StateKey = "AutoPC",
+	KeyCode = Enum.KeyCode.G,
+	Callback = OnToggleAutoPC,
+}, 1)
+
+CreateOptionButton({
 	Label = "Exit Door ESP",
 	StateKey = "ExitDoorESP",
 	KeyCode = Enum.KeyCode.L,
 	Callback = OnToggleExitDoorESP,
-}, 1)
+}, 2)
 
 CreateOptionButton({
 	Label = "PC ESP",
 	StateKey = "PCESP",
 	KeyCode = Enum.KeyCode.K,
 	Callback = OnTogglePCESP,
-}, 2)
+}, 3)
 
 CreateOptionButton({
 	Label = "Player ESP",
 	StateKey = "PlayerESP",
 	KeyCode = Enum.KeyCode.H,
 	Callback = OnTogglePlayerESP,
-}, 3)
+}, 4)
 
 local function SetMenuVisibility(open: boolean)
 	MenuOpen = open
