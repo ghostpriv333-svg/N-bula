@@ -6,8 +6,7 @@ local HttpService = game:GetService("HttpService")
 local ContentProvider = game:GetService("ContentProvider")
 
 local FTF_PLACE_ID = 893973440
-local FTF_MODULE_URL = "https://raw.githubusercontent.com/ghostpriv333-svg/N-bula/refs/heads/main/FTF"
-
+local FTF_MODULE_URL = "https://raw.githubusercontent.com/ghostpriv333-svg/N-bula/refs/heads/main/N%C3%A9bula%20Flee"
 local player = Players.LocalPlayer
 while not player do
 	task.wait(0.1)
