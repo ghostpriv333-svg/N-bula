@@ -3,6 +3,7 @@ print("[Nebula Hub] A iniciar seletor visual...")
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
+local ContentProvider = game:GetService("ContentProvider")
 
 local player = Players.LocalPlayer
 while not player do
@@ -37,29 +38,46 @@ local function animar(instancia, duracao, estilo, direcao, propriedades)
 end
 
 local function obterImagemJogo(universeId, placeId)
-	local imgUrl = nil
+	local candidatos = {}
 
-	if universeId and universeId > 0 then
+	local targetPlace = placeId or game.PlaceId
+	local targetUniverse = universeId or game.GameId
+
+	if targetPlace and targetPlace > 0 then
+		table.insert(candidatos, "rbxthumb://type=GameIcon&id=" .. tostring(targetPlace) .. "&w=256&h=256")
+		table.insert(candidatos, "rbxthumb://type=GameThumbnail&id=" .. tostring(targetPlace) .. "&w=420&h=236")
+	end
+
+	if targetUniverse and targetUniverse > 0 and targetUniverse ~= targetPlace then
+		table.insert(candidatos, "rbxthumb://type=GameIcon&id=" .. tostring(targetUniverse) .. "&w=256&h=256")
+	end
+
+	if targetUniverse and targetUniverse > 0 then
 		pcall(function()
 			local url = "https://thumbnails.roblox.com/v1/games/icons?universeIds="
-				.. tostring(universeId)
+				.. tostring(targetUniverse)
 				.. "&returnPolicy=PlaceHolder&size=256x256&format=Png&isCircular=false"
 			local raw = game:HttpGet(url)
 			local data = HttpService:JSONDecode(raw)
-			if data and data.data and data.data[1] and data.data[1].imageUrl then
-				if data.data[1].imageUrl ~= "" then
-					imgUrl = data.data[1].imageUrl
-				end
+			if data and data.data and data.data[1] and data.data[1].imageUrl and data.data[1].imageUrl ~= "" then
+				table.insert(candidatos, 1, data.data[1].imageUrl)
 			end
 		end)
 	end
 
-	if not imgUrl then
-		local idFallback = (universeId and universeId > 0) and universeId or (placeId or game.PlaceId)
-		imgUrl = "rbxthumb://type=GameIcon&id=" .. tostring(idFallback) .. "&w=256&h=256"
+	for _, asset in ipairs(candidatos) do
+		local ok = pcall(function()
+			local tempImg = Instance.new("ImageLabel")
+			tempImg.Image = asset
+			ContentProvider:PreloadAsync({tempImg})
+			tempImg:Destroy()
+		end)
+		if ok and asset ~= "" then
+			return asset
+		end
 	end
 
-	return imgUrl
+	return candidatos[1] or ""
 end
 
 -- ==========================================
@@ -107,7 +125,7 @@ LSub.Text = "A inicializar..."
 LSub.TextColor3 = Color3.fromRGB(175, 175, 182)
 LSub.TextSize = 13
 LSub.Font = Enum.Font.SourceSans
-LTitle.Parent = MainLoader
+LSub.Parent = MainLoader
 
 local LPct = Instance.new("TextLabel")
 LPct.Size = UDim2.new(1, -24, 0, 20)
@@ -144,6 +162,7 @@ animar(MainLoader, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {
 	Size = UDim2.new(0, loaderW, 0, loaderH),
 	Position = UDim2.new(0.5, -loaderW / 2, 0.5, -loaderH / 2)
 })
+
 local function setProgresso(pct, texto)
 	if LBarFill and LBarFill.Parent then
 		animar(LBarFill, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {
@@ -157,7 +176,6 @@ local function setProgresso(pct, texto)
 		LSub.Text = texto
 	end
 end
-
 local function abrirHubPrincipal(imagemJogoFTF)
 	local HubGui = Instance.new("ScreenGui")
 	HubGui.Name = "TBO_Hub"
