@@ -6,6 +6,7 @@ local HttpService = game:GetService("HttpService")
 local ContentProvider = game:GetService("ContentProvider")
 
 local FTF_PLACE_ID = 893973440
+local FTF_MODULE_URL = "https://raw.githubusercontent.com/ghostpriv333-svg/N-bula/refs/heads/main/FTF"
 
 local player = Players.LocalPlayer
 while not player do
@@ -60,6 +61,23 @@ local function animar(instancia, duracao, estilo, direcao, propriedades)
 		local tween = TweenService:Create(instancia, info, propriedades)
 		tween:Play()
 	end)
+end
+
+local function executarScriptRemoto(urlBase, nomeModulo)
+	local ok, err = pcall(function()
+		local url = urlBase .. "?v=" .. tostring(os.clock())
+		local codigo = game:HttpGet(url, true)
+		local fn = loadstring(codigo)
+		if fn then
+			fn()
+		else
+			error("Erro de compilacao no modulo " .. tostring(nomeModulo))
+		end
+	end)
+
+	if not ok then
+		warn("[Nebula Hub] Falha ao carregar " .. tostring(nomeModulo) .. ": " .. tostring(err))
+	end
 end
 
 local function obterImagemJogo(universeId, placeId)
@@ -610,7 +628,8 @@ local function abrirHubPrincipal(imagemJogoFTF)
 	end
 
 	criarCartaoJogo(imagemJogoFTF, "FLEE THE FACILITY", "Compativel", function()
-		print("[Nebula Hub] Flee the Facility selecionado.")
+		print("[Nebula Hub] A iniciar modulo Flee the Facility...")
+		executarScriptRemoto(FTF_MODULE_URL, "FTF")
 	end)
 
 	local Footer = Instance.new("Frame")
