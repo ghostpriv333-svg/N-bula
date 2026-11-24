@@ -1,0 +1,498 @@
+print("[Nebula Hub] A iniciar seletor visual...")
+
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+
+local player = Players.LocalPlayer
+while not player do
+	task.wait(0.1)
+	player = Players.LocalPlayer
+end
+
+local playerGui = player:WaitForChild("PlayerGui")
+
+pcall(function()
+	for _, name in ipairs({"TBO_Loader", "TBO_Hub", "TBO_ToggleBtn"}) do
+		local old = playerGui:FindFirstChild(name)
+		if old then
+			old:Destroy()
+		end
+	end
+end)
+
+local function animar(instancia, duracao, estilo, direcao, propriedades)
+	if not instancia or not instancia.Parent then
+		return
+	end
+	pcall(function()
+		local info = TweenInfo.new(
+			duracao,
+			estilo or Enum.EasingStyle.Quart,
+			direcao or Enum.EasingDirection.Out
+		)
+		local tween = TweenService:Create(instancia, info, propriedades)
+		tween:Play()
+	end)
+end
+
+local LoadGui = Instance.new("ScreenGui")
+LoadGui.Name = "TBO_Loader"
+LoadGui.ResetOnSpawn = false
+LoadGui.DisplayOrder = 50
+LoadGui.Parent = playerGui
+
+local loaderW, loaderH = 380, 175
+local MainLoader = Instance.new("Frame")
+MainLoader.Size = UDim2.new(0, loaderW * 0.88, 0, loaderH * 0.88)
+MainLoader.Position = UDim2.new(0.5, -(loaderW * 0.88) / 2, 0.5, -(loaderH * 0.88) / 2)
+MainLoader.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
+MainLoader.BorderSizePixel = 0
+MainLoader.Parent = LoadGui
+
+local LCorner = Instance.new("UICorner")
+LCorner.CornerRadius = UDim.new(0, 12)
+LCorner.Parent = MainLoader
+
+local LStroke = Instance.new("UIStroke")
+LStroke.Color = Color3.fromRGB(220, 40, 40)
+LStroke.Thickness = 1.2
+LStroke.Parent = MainLoader
+
+local LTitle = Instance.new("TextLabel")
+LTitle.Size = UDim2.new(1, -20, 0, 30)
+LTitle.Position = UDim2.new(0, 10, 0, 16)
+LTitle.BackgroundTransparency = 1
+LTitle.Text = "N  NEBULA HUB"
+LTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+LTitle.TextSize = 18
+LTitle.Font = Enum.Font.SourceSansBold
+LTitle.Parent = MainLoader
+
+local LSub = Instance.new("TextLabel")
+LSub.Size = UDim2.new(1, -20, 0, 22)
+LSub.Position = UDim2.new(0, 10, 0, 56)
+LSub.BackgroundTransparency = 1
+LSub.Text = "A carregar biblioteca de jogos..."
+LSub.TextColor3 = Color3.fromRGB(170, 170, 175)
+LSub.TextSize = 13
+LSub.Font = Enum.Font.SourceSans
+LTitle.Parent = MainLoader
+
+local LBarBg = Instance.new("Frame")
+LBarBg.Size = UDim2.new(0.84, 0, 0, 8)
+LBarBg.Position = UDim2.new(0.08, 0, 0.72, 0)
+LBarBg.BackgroundColor3 = Color3.fromRGB(32, 32, 36)
+LBarBg.BorderSizePixel = 0
+LBarBg.Parent = MainLoader
+
+local LBarBgC = Instance.new("UICorner")
+LBarBgC.CornerRadius = UDim.new(1, 0)
+LBarBgC.Parent = LBarBg
+
+local LBarFill = Instance.new("Frame")
+LBarFill.Size = UDim2.new(0, 0, 1, 0)
+LBarFill.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+LBarFill.BorderSizePixel = 0
+LBarFill.Parent = LBarBg
+
+local LBarFillC = Instance.new("UICorner")
+LBarFillC.CornerRadius = UDim.new(1, 0)
+LBarFillC.Parent = LBarFill
+
+animar(MainLoader, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {
+	Size = UDim2.new(0, loaderW, 0, loaderH),
+	Position = UDim2.new(0.5, -loaderW / 2, 0.5, -loaderH / 2)
+})
+local function abrirHubPrincipal()
+	local HubGui = Instance.new("ScreenGui")
+	HubGui.Name = "TBO_Hub"
+	HubGui.ResetOnSpawn = false
+	HubGui.DisplayOrder = 40
+	HubGui.Parent = playerGui
+
+	local cam = workspace.CurrentCamera
+	local vp = cam and cam.ViewportSize or Vector2.new(850, 500)
+	local hubW = math.clamp(680, 340, vp.X - 32)
+	local hubH = math.clamp(380, 250, vp.Y - 32)
+
+	local FloatBtn = Instance.new("TextButton")
+	FloatBtn.Name = "TBO_ToggleBtn"
+	FloatBtn.Size = UDim2.new(0, 68, 0, 68)
+	FloatBtn.Position = UDim2.new(1, -82, 0.5, -34)
+	FloatBtn.BackgroundColor3 = Color3.fromRGB(18, 18, 20)
+	FloatBtn.Text = "NEBULA"
+	FloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	FloatBtn.TextSize = 11
+	FloatBtn.Font = Enum.Font.SourceSansBold
+	FloatBtn.Visible = false
+	FloatBtn.Active = true
+	FloatBtn.Draggable = true
+	FloatBtn.ZIndex = 50
+	FloatBtn.Parent = HubGui
+
+	local FloatCorner = Instance.new("UICorner")
+	FloatCorner.CornerRadius = UDim.new(1, 0)
+	FloatCorner.Parent = FloatBtn
+
+	local FloatStroke = Instance.new("UIStroke")
+	FloatStroke.Color = Color3.fromRGB(220, 40, 40)
+	FloatStroke.Thickness = 1.6
+	FloatStroke.Parent = FloatBtn
+
+	local Win = Instance.new("Frame")
+	Win.Size = UDim2.new(0, hubW, 0, hubH)
+	Win.Position = UDim2.new(0.5, -hubW / 2, 0.5, -hubH / 2 + 18)
+	Win.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
+	Win.BackgroundTransparency = 0.04
+	Win.BorderSizePixel = 0
+	Win.Active = true
+	Win.Draggable = true
+	Win.Parent = HubGui
+
+	local WinCorner = Instance.new("UICorner")
+	WinCorner.CornerRadius = UDim.new(0, 12)
+	WinCorner.Parent = Win
+
+	local WinStroke = Instance.new("UIStroke")
+	WinStroke.Color = Color3.fromRGB(45, 45, 50)
+	WinStroke.Thickness = 1
+	WinStroke.Parent = Win
+
+	animar(Win, 0.3, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, {
+		Position = UDim2.new(0.5, -hubW / 2, 0.5, -hubH / 2)
+	})
+
+	local TopBar = Instance.new("Frame")
+	TopBar.Size = UDim2.new(1, 0, 0, 42)
+	TopBar.BackgroundColor3 = Color3.fromRGB(20, 20, 23)
+	TopBar.BorderSizePixel = 0
+	TopBar.Parent = Win
+
+	local TopCorner = Instance.new("UICorner")
+	TopCorner.CornerRadius = UDim.new(0, 12)
+	TopCorner.Parent = TopBar
+
+	local BrandLbl = Instance.new("TextLabel")
+	BrandLbl.Size = UDim2.new(0, 110, 1, 0)
+	BrandLbl.Position = UDim2.new(0, 16, 0, 0)
+	BrandLbl.BackgroundTransparency = 1
+	BrandLbl.Text = "N   NEBULA"
+	BrandLbl.TextColor3 = Color3.fromRGB(220, 40, 40)
+	BrandLbl.TextSize = 15
+	BrandLbl.Font = Enum.Font.SourceSansBold
+	BrandLbl.TextXAlignment = Enum.TextXAlignment.Left
+	BrandLbl.Parent = TopBar
+
+	local MinBtn = Instance.new("TextButton")
+	MinBtn.Size = UDim2.new(0, 28, 0, 28)
+	MinBtn.Position = UDim2.new(1, -68, 0.5, -14)
+	MinBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 34)
+	MinBtn.Text = "-"
+	MinBtn.TextColor3 = Color3.fromRGB(220, 220, 225)
+	MinBtn.TextSize = 14
+	MinBtn.Font = Enum.Font.SourceSansBold
+	MinBtn.Parent = TopBar
+
+	local MinC = Instance.new("UICorner")
+	MinC.CornerRadius = UDim.new(0, 6)
+	MinC.Parent = MinBtn
+
+	local CloseBtn = Instance.new("TextButton")
+	CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+	CloseBtn.Position = UDim2.new(1, -36, 0.5, -14)
+	CloseBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 34)
+	CloseBtn.Text = "X"
+	CloseBtn.TextColor3 = Color3.fromRGB(220, 220, 225)
+	CloseBtn.TextSize = 12
+	CloseBtn.Font = Enum.Font.SourceSansBold
+	CloseBtn.Parent = TopBar
+
+	local CloseC = Instance.new("UICorner")
+	CloseC.CornerRadius = UDim.new(0, 6)
+	CloseC.Parent = CloseBtn
+
+	MinBtn.MouseButton1Click:Connect(function()
+		Win.Visible = false
+		FloatBtn.Visible = true
+	end)
+
+	FloatBtn.MouseButton1Click:Connect(function()
+		FloatBtn.Visible = false
+		Win.Visible = true
+	end)
+
+	CloseBtn.MouseButton1Click:Connect(function()
+		pcall(function()
+			HubGui:Destroy()
+		end)
+	end)
+
+	local TabBar = Instance.new("Frame")
+	TabBar.Size = UDim2.new(1, -24, 0, 34)
+	TabBar.Position = UDim2.new(0, 12, 0, 46)
+	TabBar.BackgroundTransparency = 1
+	TabBar.Parent = Win
+
+	local TabLayout = Instance.new("UIListLayout")
+	TabLayout.FillDirection = Enum.FillDirection.Horizontal
+	TabLayout.Padding = UDim.new(0, 14)
+	TabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
+	TabLayout.Parent = TabBar
+
+	local Body = Instance.new("Frame")
+	Body.Size = UDim2.new(1, -24, 1, -112)
+	Body.Position = UDim2.new(0, 12, 0, 84)
+	Body.BackgroundTransparency = 1
+	Body.Parent = Win
+
+	local paginas = {}
+	local botoesAba = {}
+	local indicadores = {}
+
+	local function criarAbaTopo(nome)
+		local Holder = Instance.new("Frame")
+		Holder.Size = UDim2.new(0, 95, 1, 0)
+		Holder.BackgroundTransparency = 1
+		Holder.Parent = TabBar
+
+		local Btn = Instance.new("TextButton")
+		Btn.Size = UDim2.new(1, 0, 1, -3)
+		Btn.BackgroundTransparency = 1
+		Btn.Text = nome
+		Btn.TextColor3 = Color3.fromRGB(150, 150, 158)
+		Btn.TextSize = 13
+		Btn.Font = Enum.Font.SourceSansBold
+		Btn.Parent = Holder
+
+		local Line = Instance.new("Frame")
+		Line.Size = UDim2.new(1, 0, 0, 2)
+		Line.Position = UDim2.new(0, 0, 1, -2)
+		Line.BackgroundColor3 = Color3.fromRGB(220, 40, 40)
+		Line.BorderSizePixel = 0
+		Line.Visible = false
+		Line.Parent = Holder
+
+		local Page = Instance.new("ScrollingFrame")
+		Page.Size = UDim2.new(1, 0, 1, 0)
+		Page.BackgroundTransparency = 1
+		Page.BorderSizePixel = 0
+		Page.ScrollBarThickness = 3
+		Page.Visible = false
+		Page.Parent = Body
+
+		paginas[nome] = Page
+		botoesAba[nome] = Btn
+		indicadores[nome] = Line
+
+		Btn.MouseButton1Click:Connect(function()
+			for k, p in pairs(paginas) do
+				p.Visible = (k == nome)
+				botoesAba[k].TextColor3 = (k == nome) and Color3.fromRGB(255, 255, 255) or Color3.fromRGB(150, 150, 158)
+				indicadores[k].Visible = (k == nome)
+			end
+		end)
+
+		return Page
+	end
+
+	local abaInfo = criarAbaTopo("Info")
+	local abaJogos = criarAbaTopo("Jogos")
+
+	paginas["Info"].Visible = true
+	botoesAba["Info"].TextColor3 = Color3.fromRGB(255, 255, 255)
+	indicadores["Info"].Visible = true
+
+	local InfoLayout = Instance.new("UIListLayout")
+	InfoLayout.Padding = UDim.new(0, 8)
+	InfoLayout.Parent = abaInfo
+	abaInfo.CanvasSize = UDim2.new(0, 0, 0, 320)
+
+	local function criarCartaoInfo(titulo, texto, altura)
+		local Card = Instance.new("Frame")
+		Card.Size = UDim2.new(1, -6, 0, altura)
+		Card.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
+		Card.BorderSizePixel = 0
+		Card.Parent = abaInfo
+
+		local C = Instance.new("UICorner")
+		C.CornerRadius = UDim.new(0, 8)
+		C.Parent = Card
+
+		local S = Instance.new("UIStroke")
+		S.Color = Color3.fromRGB(48, 48, 55)
+		S.Thickness = 1
+		S.Parent = Card
+
+		local T = Instance.new("TextLabel")
+		T.Size = UDim2.new(1, -20, 0, 20)
+		T.Position = UDim2.new(0, 10, 0, 6)
+		T.BackgroundTransparency = 1
+		T.Text = titulo
+		T.TextColor3 = Color3.fromRGB(255, 255, 255)
+		T.TextSize = 13
+		T.Font = Enum.Font.SourceSansBold
+		T.TextXAlignment = Enum.TextXAlignment.Left
+		T.Parent = Card
+
+		local D = Instance.new("TextLabel")
+		D.Size = UDim2.new(1, -20, 1, -28)
+		D.Position = UDim2.new(0, 10, 0, 25)
+		D.BackgroundTransparency = 1
+		D.Text = texto
+		D.TextColor3 = Color3.fromRGB(190, 190, 198)
+		D.TextSize = 12
+		D.Font = Enum.Font.SourceSans
+		D.TextWrapped = true
+		D.TextXAlignment = Enum.TextXAlignment.Left
+		D.TextYAlignment = Enum.TextYAlignment.Top
+		D.Parent = Card
+	end
+
+	criarCartaoInfo(
+		"NEBULA HUB - INFO",
+		"Este projeto foi desenvolvido com base de ser o meu primeiro menu publico em texte, eu quis experimentar criar algo que fosse usado pela comunidade de scripts. Claro eu peguei varias ideias de outros script, como os de Flee the facility, brookhaven, e universais claro.",
+		122
+	)
+	criarCartaoInfo(
+		"CREDITOS",
+		"Criado por: [Rafael/BLX] | Colaboracao: [Banana, Goncalo, Augusto]",
+		52
+	)
+	criarCartaoInfo(
+		"DATA DE CRIACAO",
+		"Novembro de 2026 — Versao leve otimizada para Delta e dispositivos moveis",
+		52
+	)
+
+	abaJogos.ScrollingDirection = Enum.ScrollingDirection.X
+	abaJogos.CanvasSize = UDim2.new(0, 420, 1, 0)
+
+	local JogosLayout = Instance.new("UIListLayout")
+	JogosLayout.FillDirection = Enum.FillDirection.Horizontal
+	JogosLayout.Padding = UDim.new(0, 12)
+	JogosLayout.Parent = abaJogos
+
+	local function criarCartaoJogo(simbolo, nomeJogo, tag, aoExecutar)
+		local Card = Instance.new("Frame")
+		Card.Size = UDim2.new(0, 162, 1, -8)
+		Card.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
+		Card.BorderSizePixel = 0
+		Card.Parent = abaJogos
+
+		local CC = Instance.new("UICorner")
+		CC.CornerRadius = UDim.new(0, 10)
+		CC.Parent = Card
+
+		local CS = Instance.new("UIStroke")
+		CS.Color = Color3.fromRGB(220, 40, 40)
+		CS.Thickness = 1
+		CS.Parent = Card
+
+		local ArtBox = Instance.new("Frame")
+		ArtBox.Size = UDim2.new(1, -16, 0, 96)
+		ArtBox.Position = UDim2.new(0, 8, 0, 8)
+		ArtBox.BackgroundColor3 = Color3.fromRGB(34, 18, 20)
+		ArtBox.BorderSizePixel = 0
+		ArtBox.Parent = Card
+
+		local AC = Instance.new("UICorner")
+		AC.CornerRadius = UDim.new(0, 8)
+		AC.Parent = ArtBox
+
+		local IconTxt = Instance.new("TextLabel")
+		IconTxt.Size = UDim2.new(1, 0, 1, 0)
+		IconTxt.BackgroundTransparency = 1
+		IconTxt.Text = simbolo
+		IconTxt.TextColor3 = Color3.fromRGB(235, 55, 55)
+		IconTxt.TextSize = 30
+		IconTxt.Font = Enum.Font.SourceSansBold
+		IconTxt.Parent = ArtBox
+
+		local ExecBtn = Instance.new("TextButton")
+		ExecBtn.Size = UDim2.new(1, -16, 0, 26)
+		ExecBtn.Position = UDim2.new(0, 8, 1, -64)
+		ExecBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 32)
+		ExecBtn.Text = "> Executar"
+		ExecBtn.TextColor3 = Color3.fromRGB(240, 240, 245)
+		ExecBtn.TextSize = 12
+		ExecBtn.Font = Enum.Font.SourceSansBold
+		ExecBtn.Parent = Card
+
+		local EC = Instance.new("UICorner")
+		EC.CornerRadius = UDim.new(0, 6)
+		EC.Parent = ExecBtn
+
+		local NameLbl = Instance.new("TextLabel")
+		NameLbl.Size = UDim2.new(1, -16, 0, 16)
+		NameLbl.Position = UDim2.new(0, 8, 1, -34)
+		NameLbl.BackgroundTransparency = 1
+		NameLbl.Text = nomeJogo
+		NameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+		NameLbl.TextSize = 11
+		NameLbl.Font = Enum.Font.SourceSansBold
+		NameLbl.TextXAlignment = Enum.TextXAlignment.Left
+		NameLbl.Parent = Card
+
+		local TagLbl = Instance.new("TextLabel")
+		TagLbl.Size = UDim2.new(1, -16, 0, 14)
+		TagLbl.Position = UDim2.new(0, 8, 1, -18)
+		TagLbl.BackgroundTransparency = 1
+		TagLbl.Text = tag
+		TagLbl.TextColor3 = Color3.fromRGB(130, 220, 150)
+		TagLbl.TextSize = 10
+		TagLbl.Font = Enum.Font.SourceSans
+		TagLbl.TextXAlignment = Enum.TextXAlignment.Left
+		TagLbl.Parent = Card
+
+		ExecBtn.MouseButton1Click:Connect(function()
+			pcall(function()
+				HubGui:Destroy()
+			end)
+			if aoExecutar then
+				aoExecutar()
+			end
+		end)
+	end
+
+	criarCartaoJogo("<>", "FLEE THE FACILITY", "Compativel", function()
+		print("[Nebula Hub] Flee the Facility selecionado.")
+	end)
+
+	local Footer = Instance.new("Frame")
+	Footer.Size = UDim2.new(1, -24, 0, 24)
+	Footer.Position = UDim2.new(0, 12, 1, -28)
+	Footer.BackgroundTransparency = 1
+	Footer.Parent = Win
+
+	local FootLeft = Instance.new("TextLabel")
+	FootLeft.Size = UDim2.new(0.7, 0, 1, 0)
+	FootLeft.BackgroundTransparency = 1
+	FootLeft.Text = "Feito por [Rafael/BLX]   |   Design Nebula Hub"
+	FootLeft.TextColor3 = Color3.fromRGB(135, 135, 142)
+	FootLeft.TextSize = 11
+	FootLeft.Font = Enum.Font.SourceSans
+	FootLeft.TextXAlignment = Enum.TextXAlignment.Left
+	FootLeft.Parent = Footer
+end
+
+task.spawn(function()
+	for i = 1, 100 do
+		if LBarFill and LBarFill.Parent then
+			LBarFill.Size = UDim2.new(i / 100, 0, 1, 0)
+		end
+		task.wait(0.01)
+	end
+	animar(MainLoader, 0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In, {
+		Position = UDim2.new(0.5, -loaderW / 2, 0.5, -loaderH / 2 + 16)
+	})
+	task.wait(0.2)
+	pcall(function()
+		if LoadGui then
+			LoadGui:Destroy()
+		end
+	end)
+	local ok, err = pcall(abrirHubPrincipal)
+	if not ok then
+		warn("[Nebula Hub] Erro ao abrir Hub: " .. tostring(err))
+	end
+end)
