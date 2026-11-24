@@ -5,6 +5,8 @@ local TweenService = game:GetService("TweenService")
 local HttpService = game:GetService("HttpService")
 local ContentProvider = game:GetService("ContentProvider")
 
+local FTF_PLACE_ID = 893973440
+
 local player = Players.LocalPlayer
 while not player do
 	task.wait(0.1)
@@ -40,16 +42,22 @@ end
 local function obterImagemJogo(universeId, placeId)
 	local candidatos = {}
 
-	local targetPlace = placeId or game.PlaceId
-	local targetUniverse = universeId or game.GameId
+	local targetUniverse = (universeId and universeId > 0) and universeId or game.GameId
+	local targetPlace = (placeId and placeId > 0) and placeId or game.PlaceId
+
+	if targetUniverse and targetUniverse > 0 then
+		table.insert(candidatos, "rbxthumb://type=GameIcon&id=" .. tostring(targetUniverse) .. "&w=256&h=256")
+		table.insert(candidatos, "rbxthumb://type=GameThumbnail&id=" .. tostring(targetUniverse) .. "&w=420&h=236")
+	end
 
 	if targetPlace and targetPlace > 0 then
 		table.insert(candidatos, "rbxthumb://type=GameIcon&id=" .. tostring(targetPlace) .. "&w=256&h=256")
 		table.insert(candidatos, "rbxthumb://type=GameThumbnail&id=" .. tostring(targetPlace) .. "&w=420&h=236")
 	end
 
-	if targetUniverse and targetUniverse > 0 and targetUniverse ~= targetPlace then
-		table.insert(candidatos, "rbxthumb://type=GameIcon&id=" .. tostring(targetUniverse) .. "&w=256&h=256")
+	if targetPlace ~= FTF_PLACE_ID then
+		table.insert(candidatos, "rbxthumb://type=GameIcon&id=" .. tostring(FTF_PLACE_ID) .. "&w=256&h=256")
+		table.insert(candidatos, "rbxthumb://type=GameThumbnail&id=" .. tostring(FTF_PLACE_ID) .. "&w=420&h=236")
 	end
 
 	if targetUniverse and targetUniverse > 0 then
@@ -566,7 +574,7 @@ task.spawn(function()
 	task.wait(0.12)
 
 	setProgresso(60, "A obter imagem do jogo...")
-	local imgFTF = obterImagemJogo(game.GameId, game.PlaceId)
+	local imgFTF = obterImagemJogo(game.GameId, FTF_PLACE_ID)
 	task.wait(0.12)
 
 	setProgresso(90, "A preparar interface...")
