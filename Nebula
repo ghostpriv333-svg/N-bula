@@ -24,6 +24,29 @@ pcall(function()
 	end
 end)
 
+local function obterViewport()
+	local cam = workspace.CurrentCamera
+	if cam and cam.ViewportSize.X > 0 and cam.ViewportSize.Y > 0 then
+		return cam.ViewportSize
+	end
+	return Vector2.new(854, 480)
+end
+
+local function calcularLoaderSize(vp)
+	local w = math.clamp(math.floor(vp.X * 0.56), 270, 410)
+	local h = math.clamp(math.floor(vp.Y * 0.48), 155, 200)
+	return w, h
+end
+
+local function calcularHubSize(vp)
+	local isMobileSmall = (vp.X <= 820) or (vp.Y <= 450)
+	local wRatio = isMobileSmall and 0.78 or 0.68
+	local hRatio = isMobileSmall and 0.78 or 0.72
+	local w = math.clamp(math.floor(vp.X * wRatio), 310, 680)
+	local h = math.clamp(math.floor(vp.Y * hRatio), 215, 380)
+	return w, h
+end
+
 local function animar(instancia, duracao, estilo, direcao, propriedades)
 	if not instancia or not instancia.Parent then
 		return
@@ -89,18 +112,21 @@ local function obterImagemJogo(universeId, placeId)
 end
 
 -- ==========================================
--- 1. CARREGAMENTO MELHORADO
+-- 1. CARREGAMENTO ADAPTATIVO
 -- ==========================================
 local LoadGui = Instance.new("ScreenGui")
 LoadGui.Name = "TBO_Loader"
 LoadGui.ResetOnSpawn = false
+LoadGui.IgnoreGuiInset = true
 LoadGui.DisplayOrder = 50
 LoadGui.Parent = playerGui
 
-local loaderW, loaderH = 400, 195
+local vpLoad = obterViewport()
+local loaderW, loaderH = calcularLoaderSize(vpLoad)
+
 local MainLoader = Instance.new("Frame")
-MainLoader.Size = UDim2.new(0, loaderW * 0.88, 0, loaderH * 0.88)
-MainLoader.Position = UDim2.new(0.5, -(loaderW * 0.88) / 2, 0.5, -(loaderH * 0.88) / 2)
+MainLoader.Size = UDim2.new(0, math.floor(loaderW * 0.9), 0, math.floor(loaderH * 0.9))
+MainLoader.Position = UDim2.new(0.5, -math.floor(loaderW * 0.9) / 2, 0.5, -math.floor(loaderH * 0.9) / 2)
 MainLoader.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
 MainLoader.BackgroundTransparency = 0.04
 MainLoader.BorderSizePixel = 0
@@ -116,18 +142,18 @@ LStroke.Thickness = 1.3
 LStroke.Parent = MainLoader
 
 local LTitle = Instance.new("TextLabel")
-LTitle.Size = UDim2.new(1, -24, 0, 28)
-LTitle.Position = UDim2.new(0, 12, 0, 18)
+LTitle.Size = UDim2.new(1, -24, 0, 26)
+LTitle.Position = UDim2.new(0, 12, 0.1, 0)
 LTitle.BackgroundTransparency = 1
 LTitle.Text = "NEBULA HUB"
 LTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-LTitle.TextSize = 20
+LTitle.TextSize = 19
 LTitle.Font = Enum.Font.SourceSansBold
 LTitle.Parent = MainLoader
 
 local LSub = Instance.new("TextLabel")
-LSub.Size = UDim2.new(1, -24, 0, 20)
-LSub.Position = UDim2.new(0, 12, 0, 54)
+LSub.Size = UDim2.new(1, -24, 0, 18)
+LSub.Position = UDim2.new(0, 12, 0.3, 0)
 LSub.BackgroundTransparency = 1
 LSub.Text = "A iniciar..."
 LSub.TextColor3 = Color3.fromRGB(175, 175, 182)
@@ -136,8 +162,8 @@ LSub.Font = Enum.Font.SourceSans
 LSub.Parent = MainLoader
 
 local LPct = Instance.new("TextLabel")
-LPct.Size = UDim2.new(1, -24, 0, 20)
-LPct.Position = UDim2.new(0, 12, 0, 84)
+LPct.Size = UDim2.new(1, -24, 0, 18)
+LPct.Position = UDim2.new(0, 12, 0.46, 0)
 LPct.BackgroundTransparency = 1
 LPct.Text = "0%"
 LPct.TextColor3 = Color3.fromRGB(235, 65, 65)
@@ -165,6 +191,19 @@ LBarFill.Parent = LBarBg
 local LBarFillC = Instance.new("UICorner")
 LBarFillC.CornerRadius = UDim.new(1, 0)
 LBarFillC.Parent = LBarFill
+
+local function atualizarLoaderLayout()
+	if not MainLoader or not MainLoader.Parent then
+		return
+	end
+	loaderW, loaderH = calcularLoaderSize(obterViewport())
+	MainLoader.Size = UDim2.new(0, loaderW, 0, loaderH)
+	MainLoader.Position = UDim2.new(0.5, -loaderW / 2, 0.5, -loaderH / 2)
+end
+
+if workspace.CurrentCamera then
+	workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(atualizarLoaderLayout)
+end
 
 animar(MainLoader, 0.25, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {
 	Size = UDim2.new(0, loaderW, 0, loaderH),
@@ -202,18 +241,18 @@ local function abrirHubPrincipal(imagemJogoFTF)
 	local HubGui = Instance.new("ScreenGui")
 	HubGui.Name = "TBO_Hub"
 	HubGui.ResetOnSpawn = false
+	HubGui.IgnoreGuiInset = true
 	HubGui.DisplayOrder = 40
 	HubGui.Parent = playerGui
 
-	local cam = workspace.CurrentCamera
-	local vp = cam and cam.ViewportSize or Vector2.new(850, 500)
-	local hubW = math.clamp(680, 340, vp.X - 32)
-	local hubH = math.clamp(380, 250, vp.Y - 32)
+	local vp = obterViewport()
+	local hubW, hubH = calcularHubSize(vp)
+	local btnSize = math.clamp(math.floor(math.min(vp.X, vp.Y) * 0.14), 52, 68)
 
 	local FloatBtn = Instance.new("TextButton")
 	FloatBtn.Name = "TBO_ToggleBtn"
-	FloatBtn.Size = UDim2.new(0, 68, 0, 68)
-	FloatBtn.Position = UDim2.new(1, -82, 0.5, -34)
+	FloatBtn.Size = UDim2.new(0, btnSize, 0, btnSize)
+	FloatBtn.Position = UDim2.new(1, -(btnSize + 14), 0.5, -btnSize / 2)
 	FloatBtn.BackgroundColor3 = Color3.fromRGB(18, 18, 20)
 	FloatBtn.Text = "NEBULA"
 	FloatBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -236,7 +275,7 @@ local function abrirHubPrincipal(imagemJogoFTF)
 
 	local Win = Instance.new("Frame")
 	Win.Size = UDim2.new(0, hubW, 0, hubH)
-	Win.Position = UDim2.new(0.5, -hubW / 2, 0.5, -hubH / 2 + 18)
+	Win.Position = UDim2.new(0.5, -hubW / 2, 0.5, -hubH / 2 + 16)
 	Win.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
 	Win.BackgroundTransparency = 0.04
 	Win.BorderSizePixel = 0
@@ -253,12 +292,34 @@ local function abrirHubPrincipal(imagemJogoFTF)
 	WinStroke.Thickness = 1
 	WinStroke.Parent = Win
 
+	local function ajustarResolucaoHub()
+		if not Win or not Win.Parent then
+			return
+		end
+		local novoVp = obterViewport()
+		local novoW, novoH = calcularHubSize(novoVp)
+		local novoBtn = math.clamp(math.floor(math.min(novoVp.X, novoVp.Y) * 0.14), 52, 68)
+
+		hubW, hubH = novoW, novoH
+		Win.Size = UDim2.new(0, hubW, 0, hubH)
+		Win.Position = UDim2.new(0.5, -hubW / 2, 0.5, -hubH / 2)
+
+		if FloatBtn and FloatBtn.Parent then
+			FloatBtn.Size = UDim2.new(0, novoBtn, 0, novoBtn)
+			FloatBtn.Position = UDim2.new(1, -(novoBtn + 14), 0.5, -novoBtn / 2)
+		end
+	end
+
+	if workspace.CurrentCamera then
+		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(ajustarResolucaoHub)
+	end
+
 	animar(Win, 0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, {
 		Position = UDim2.new(0.5, -hubW / 2, 0.5, -hubH / 2)
 	})
 
 	local TopBar = Instance.new("Frame")
-	TopBar.Size = UDim2.new(1, 0, 0, 42)
+	TopBar.Size = UDim2.new(1, 0, 0, 38)
 	TopBar.BackgroundColor3 = Color3.fromRGB(20, 20, 23)
 	TopBar.BorderSizePixel = 0
 	TopBar.Parent = Win
@@ -269,7 +330,7 @@ local function abrirHubPrincipal(imagemJogoFTF)
 
 	local BrandLbl = Instance.new("TextLabel")
 	BrandLbl.Size = UDim2.new(0, 110, 1, 0)
-	BrandLbl.Position = UDim2.new(0, 16, 0, 0)
+	BrandLbl.Position = UDim2.new(0, 14, 0, 0)
 	BrandLbl.BackgroundTransparency = 1
 	BrandLbl.Text = "NEBULA"
 	BrandLbl.TextColor3 = Color3.fromRGB(220, 40, 40)
@@ -279,8 +340,8 @@ local function abrirHubPrincipal(imagemJogoFTF)
 	BrandLbl.Parent = TopBar
 
 	local MinBtn = Instance.new("TextButton")
-	MinBtn.Size = UDim2.new(0, 28, 0, 28)
-	MinBtn.Position = UDim2.new(1, -68, 0.5, -14)
+	MinBtn.Size = UDim2.new(0, 26, 0, 26)
+	MinBtn.Position = UDim2.new(1, -64, 0.5, -13)
 	MinBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 34)
 	MinBtn.Text = "-"
 	MinBtn.TextColor3 = Color3.fromRGB(220, 220, 225)
@@ -293,8 +354,8 @@ local function abrirHubPrincipal(imagemJogoFTF)
 	MinC.Parent = MinBtn
 
 	local CloseBtn = Instance.new("TextButton")
-	CloseBtn.Size = UDim2.new(0, 28, 0, 28)
-	CloseBtn.Position = UDim2.new(1, -36, 0.5, -14)
+	CloseBtn.Size = UDim2.new(0, 26, 0, 26)
+	CloseBtn.Position = UDim2.new(1, -34, 0.5, -13)
 	CloseBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 34)
 	CloseBtn.Text = "X"
 	CloseBtn.TextColor3 = Color3.fromRGB(220, 220, 225)
@@ -323,20 +384,20 @@ local function abrirHubPrincipal(imagemJogoFTF)
 	end)
 
 	local TabBar = Instance.new("Frame")
-	TabBar.Size = UDim2.new(1, -24, 0, 34)
-	TabBar.Position = UDim2.new(0, 12, 0, 46)
+	TabBar.Size = UDim2.new(1, -20, 0, 32)
+	TabBar.Position = UDim2.new(0, 10, 0, 42)
 	TabBar.BackgroundTransparency = 1
 	TabBar.Parent = Win
 
 	local TabLayout = Instance.new("UIListLayout")
 	TabLayout.FillDirection = Enum.FillDirection.Horizontal
-	TabLayout.Padding = UDim.new(0, 14)
+	TabLayout.Padding = UDim.new(0, 12)
 	TabLayout.VerticalAlignment = Enum.VerticalAlignment.Center
 	TabLayout.Parent = TabBar
 
 	local Body = Instance.new("Frame")
-	Body.Size = UDim2.new(1, -24, 1, -112)
-	Body.Position = UDim2.new(0, 12, 0, 84)
+	Body.Size = UDim2.new(1, -20, 1, -104)
+	Body.Position = UDim2.new(0, 10, 0, 78)
 	Body.BackgroundTransparency = 1
 	Body.Parent = Win
 
@@ -346,7 +407,7 @@ local function abrirHubPrincipal(imagemJogoFTF)
 
 	local function criarAbaTopo(nome)
 		local Holder = Instance.new("Frame")
-		Holder.Size = UDim2.new(0, 95, 1, 0)
+		Holder.Size = UDim2.new(0, 88, 1, 0)
 		Holder.BackgroundTransparency = 1
 		Holder.Parent = TabBar
 
@@ -469,7 +530,7 @@ local function abrirHubPrincipal(imagemJogoFTF)
 
 	local function criarCartaoJogo(imagemAsset, nomeJogo, tag, aoExecutar)
 		local Card = Instance.new("Frame")
-		Card.Size = UDim2.new(0, 162, 1, -8)
+		Card.Size = UDim2.new(0, 152, 1, -6)
 		Card.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
 		Card.BorderSizePixel = 0
 		Card.Parent = abaJogos
@@ -484,8 +545,8 @@ local function abrirHubPrincipal(imagemJogoFTF)
 		CS.Parent = Card
 
 		local ArtBox = Instance.new("Frame")
-		ArtBox.Size = UDim2.new(1, -16, 0, 96)
-		ArtBox.Position = UDim2.new(0, 8, 0, 8)
+		ArtBox.Size = UDim2.new(1, -14, 0, 86)
+		ArtBox.Position = UDim2.new(0, 7, 0, 7)
 		ArtBox.BackgroundColor3 = Color3.fromRGB(34, 18, 20)
 		ArtBox.BorderSizePixel = 0
 		ArtBox.ClipsDescendants = true
@@ -503,8 +564,8 @@ local function abrirHubPrincipal(imagemJogoFTF)
 		Img.Parent = ArtBox
 
 		local ExecBtn = Instance.new("TextButton")
-		ExecBtn.Size = UDim2.new(1, -16, 0, 26)
-		ExecBtn.Position = UDim2.new(0, 8, 1, -64)
+		ExecBtn.Size = UDim2.new(1, -14, 0, 24)
+		ExecBtn.Position = UDim2.new(0, 7, 1, -58)
 		ExecBtn.BackgroundColor3 = Color3.fromRGB(28, 28, 32)
 		ExecBtn.Text = "> Executar"
 		ExecBtn.TextColor3 = Color3.fromRGB(240, 240, 245)
@@ -517,8 +578,8 @@ local function abrirHubPrincipal(imagemJogoFTF)
 		EC.Parent = ExecBtn
 
 		local NameLbl = Instance.new("TextLabel")
-		NameLbl.Size = UDim2.new(1, -16, 0, 16)
-		NameLbl.Position = UDim2.new(0, 8, 1, -34)
+		NameLbl.Size = UDim2.new(1, -14, 0, 15)
+		NameLbl.Position = UDim2.new(0, 7, 1, -32)
 		NameLbl.BackgroundTransparency = 1
 		NameLbl.Text = nomeJogo
 		NameLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -528,8 +589,8 @@ local function abrirHubPrincipal(imagemJogoFTF)
 		NameLbl.Parent = Card
 
 		local TagLbl = Instance.new("TextLabel")
-		TagLbl.Size = UDim2.new(1, -16, 0, 14)
-		TagLbl.Position = UDim2.new(0, 8, 1, -18)
+		TagLbl.Size = UDim2.new(1, -14, 0, 13)
+		TagLbl.Position = UDim2.new(0, 7, 1, -17)
 		TagLbl.BackgroundTransparency = 1
 		TagLbl.Text = tag
 		TagLbl.TextColor3 = Color3.fromRGB(130, 220, 150)
@@ -553,13 +614,13 @@ local function abrirHubPrincipal(imagemJogoFTF)
 	end)
 
 	local Footer = Instance.new("Frame")
-	Footer.Size = UDim2.new(1, -24, 0, 24)
-	Footer.Position = UDim2.new(0, 12, 1, -28)
+	Footer.Size = UDim2.new(1, -20, 0, 22)
+	Footer.Position = UDim2.new(0, 10, 1, -25)
 	Footer.BackgroundTransparency = 1
 	Footer.Parent = Win
 
 	local FootLeft = Instance.new("TextLabel")
-	FootLeft.Size = UDim2.new(0.7, 0, 1, 0)
+	FootLeft.Size = UDim2.new(1, 0, 1, 0)
 	FootLeft.BackgroundTransparency = 1
 	FootLeft.Text = "Feito por [Rafael/BLX]   |   Design Nebula Hub"
 	FootLeft.TextColor3 = Color3.fromRGB(135, 135, 142)
@@ -583,8 +644,9 @@ task.spawn(function()
 	setProgresso(100, "Concluido!")
 	task.wait(0.15)
 
+	loaderW, loaderH = calcularLoaderSize(obterViewport())
 	animar(MainLoader, 0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In, {
-		Position = UDim2.new(0.5, -loaderW / 2, 0.5, -loaderH / 2 + 16)
+		Position = UDim2.new(0.5, -loaderW / 2, 0.5, -loaderH / 2 + 14)
 	})
 	task.wait(0.2)
 	pcall(function()
