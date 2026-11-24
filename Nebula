@@ -2,6 +2,7 @@ print("[Nebula Hub] A iniciar seletor visual...")
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local HttpService = game:GetService("HttpService")
 
 local player = Players.LocalPlayer
 while not player do
@@ -35,17 +36,47 @@ local function animar(instancia, duracao, estilo, direcao, propriedades)
 	end)
 end
 
+local function obterImagemJogo(universeId, placeId)
+	local imgUrl = nil
+
+	if universeId and universeId > 0 then
+		pcall(function()
+			local url = "https://thumbnails.roblox.com/v1/games/icons?universeIds="
+				.. tostring(universeId)
+				.. "&returnPolicy=PlaceHolder&size=256x256&format=Png&isCircular=false"
+			local raw = game:HttpGet(url)
+			local data = HttpService:JSONDecode(raw)
+			if data and data.data and data.data[1] and data.data[1].imageUrl then
+				if data.data[1].imageUrl ~= "" then
+					imgUrl = data.data[1].imageUrl
+				end
+			end
+		end)
+	end
+
+	if not imgUrl then
+		local idFallback = (universeId and universeId > 0) and universeId or (placeId or game.PlaceId)
+		imgUrl = "rbxthumb://type=GameIcon&id=" .. tostring(idFallback) .. "&w=256&h=256"
+	end
+
+	return imgUrl
+end
+
+-- ==========================================
+-- 1. CARREGAMENTO MELHORADO
+-- ==========================================
 local LoadGui = Instance.new("ScreenGui")
 LoadGui.Name = "TBO_Loader"
 LoadGui.ResetOnSpawn = false
 LoadGui.DisplayOrder = 50
 LoadGui.Parent = playerGui
 
-local loaderW, loaderH = 380, 175
+local loaderW, loaderH = 400, 195
 local MainLoader = Instance.new("Frame")
-MainLoader.Size = UDim2.new(0, loaderW * 0.88, 0, loaderH * 0.88)
-MainLoader.Position = UDim2.new(0.5, -(loaderW * 0.88) / 2, 0.5, -(loaderH * 0.88) / 2)
+MainLoader.Size = UDim2.new(0, loaderW * 0.86, 0, loaderH * 0.86)
+MainLoader.Position = UDim2.new(0.5, -(loaderW * 0.86) / 2, 0.5, -(loaderH * 0.86) / 2)
 MainLoader.BackgroundColor3 = Color3.fromRGB(16, 16, 18)
+MainLoader.BackgroundTransparency = 0.04
 MainLoader.BorderSizePixel = 0
 MainLoader.Parent = LoadGui
 
@@ -55,31 +86,41 @@ LCorner.Parent = MainLoader
 
 local LStroke = Instance.new("UIStroke")
 LStroke.Color = Color3.fromRGB(220, 40, 40)
-LStroke.Thickness = 1.2
+LStroke.Thickness = 1.3
 LStroke.Parent = MainLoader
 
 local LTitle = Instance.new("TextLabel")
-LTitle.Size = UDim2.new(1, -20, 0, 30)
-LTitle.Position = UDim2.new(0, 10, 0, 16)
+LTitle.Size = UDim2.new(1, -24, 0, 28)
+LTitle.Position = UDim2.new(0, 12, 0, 16)
 LTitle.BackgroundTransparency = 1
-LTitle.Text = "N  NEBULA HUB"
+LTitle.Text = "N   NEBULA HUB"
 LTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-LTitle.TextSize = 18
+LTitle.TextSize = 19
 LTitle.Font = Enum.Font.SourceSansBold
 LTitle.Parent = MainLoader
 
 local LSub = Instance.new("TextLabel")
-LSub.Size = UDim2.new(1, -20, 0, 22)
-LSub.Position = UDim2.new(0, 10, 0, 56)
+LSub.Size = UDim2.new(1, -24, 0, 20)
+LSub.Position = UDim2.new(0, 12, 0, 52)
 LSub.BackgroundTransparency = 1
-LSub.Text = "A carregar biblioteca de jogos..."
-LSub.TextColor3 = Color3.fromRGB(170, 170, 175)
+LSub.Text = "A inicializar..."
+LSub.TextColor3 = Color3.fromRGB(175, 175, 182)
 LSub.TextSize = 13
 LSub.Font = Enum.Font.SourceSans
 LTitle.Parent = MainLoader
 
+local LPct = Instance.new("TextLabel")
+LPct.Size = UDim2.new(1, -24, 0, 20)
+LPct.Position = UDim2.new(0, 12, 0, 82)
+LPct.BackgroundTransparency = 1
+LPct.Text = "0%"
+LPct.TextColor3 = Color3.fromRGB(235, 65, 65)
+LPct.TextSize = 14
+LPct.Font = Enum.Font.SourceSansBold
+LPct.Parent = MainLoader
+
 local LBarBg = Instance.new("Frame")
-LBarBg.Size = UDim2.new(0.84, 0, 0, 8)
+LBarBg.Size = UDim2.new(0.84, 0, 0, 10)
 LBarBg.Position = UDim2.new(0.08, 0, 0.72, 0)
 LBarBg.BackgroundColor3 = Color3.fromRGB(32, 32, 36)
 LBarBg.BorderSizePixel = 0
@@ -103,7 +144,21 @@ animar(MainLoader, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {
 	Size = UDim2.new(0, loaderW, 0, loaderH),
 	Position = UDim2.new(0.5, -loaderW / 2, 0.5, -loaderH / 2)
 })
-local function abrirHubPrincipal()
+local function setProgresso(pct, texto)
+	if LBarFill and LBarFill.Parent then
+		animar(LBarFill, 0.14, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {
+			Size = UDim2.new(math.clamp(pct, 0, 100) / 100, 0, 1, 0)
+		})
+	end
+	if LPct and LPct.Parent then
+		LPct.Text = tostring(math.floor(pct)) .. "%"
+	end
+	if texto and LSub and LSub.Parent then
+		LSub.Text = texto
+	end
+end
+
+local function abrirHubPrincipal(imagemJogoFTF)
 	local HubGui = Instance.new("ScreenGui")
 	HubGui.Name = "TBO_Hub"
 	HubGui.ResetOnSpawn = false
@@ -372,7 +427,7 @@ local function abrirHubPrincipal()
 	JogosLayout.Padding = UDim.new(0, 12)
 	JogosLayout.Parent = abaJogos
 
-	local function criarCartaoJogo(simbolo, nomeJogo, tag, aoExecutar)
+	local function criarCartaoJogo(imagemAsset, nomeJogo, tag, aoExecutar)
 		local Card = Instance.new("Frame")
 		Card.Size = UDim2.new(0, 162, 1, -8)
 		Card.BackgroundColor3 = Color3.fromRGB(24, 24, 28)
@@ -393,20 +448,19 @@ local function abrirHubPrincipal()
 		ArtBox.Position = UDim2.new(0, 8, 0, 8)
 		ArtBox.BackgroundColor3 = Color3.fromRGB(34, 18, 20)
 		ArtBox.BorderSizePixel = 0
+		ArtBox.ClipsDescendants = true
 		ArtBox.Parent = Card
 
 		local AC = Instance.new("UICorner")
 		AC.CornerRadius = UDim.new(0, 8)
 		AC.Parent = ArtBox
 
-		local IconTxt = Instance.new("TextLabel")
-		IconTxt.Size = UDim2.new(1, 0, 1, 0)
-		IconTxt.BackgroundTransparency = 1
-		IconTxt.Text = simbolo
-		IconTxt.TextColor3 = Color3.fromRGB(235, 55, 55)
-		IconTxt.TextSize = 30
-		IconTxt.Font = Enum.Font.SourceSansBold
-		IconTxt.Parent = ArtBox
+		local Img = Instance.new("ImageLabel")
+		Img.Size = UDim2.new(1, 0, 1, 0)
+		Img.BackgroundTransparency = 1
+		Img.Image = imagemAsset
+		Img.ScaleType = Enum.ScaleType.Crop
+		Img.Parent = ArtBox
 
 		local ExecBtn = Instance.new("TextButton")
 		ExecBtn.Size = UDim2.new(1, -16, 0, 26)
@@ -454,7 +508,7 @@ local function abrirHubPrincipal()
 		end)
 	end
 
-	criarCartaoJogo("<>", "FLEE THE FACILITY", "Compativel", function()
+	criarCartaoJogo(imagemJogoFTF, "FLEE THE FACILITY", "Compativel", function()
 		print("[Nebula Hub] Flee the Facility selecionado.")
 	end)
 
@@ -476,12 +530,19 @@ local function abrirHubPrincipal()
 end
 
 task.spawn(function()
-	for i = 1, 100 do
-		if LBarFill and LBarFill.Parent then
-			LBarFill.Size = UDim2.new(i / 100, 0, 1, 0)
-		end
-		task.wait(0.01)
-	end
+	setProgresso(20, "A verificar ambiente...")
+	task.wait(0.18)
+
+	setProgresso(55, "A obter imagem do jogo...")
+	local imgFTF = obterImagemJogo(game.GameId, game.PlaceId)
+	task.wait(0.2)
+
+	setProgresso(85, "A preparar interface...")
+	task.wait(0.18)
+
+	setProgresso(100, "Concluido!")
+	task.wait(0.18)
+
 	animar(MainLoader, 0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In, {
 		Position = UDim2.new(0.5, -loaderW / 2, 0.5, -loaderH / 2 + 16)
 	})
@@ -491,7 +552,9 @@ task.spawn(function()
 			LoadGui:Destroy()
 		end
 	end)
-	local ok, err = pcall(abrirHubPrincipal)
+	local ok, err = pcall(function()
+		abrirHubPrincipal(imgFTF)
+	end)
 	if not ok then
 		warn("[Nebula Hub] Erro ao abrir Hub: " .. tostring(err))
 	end
